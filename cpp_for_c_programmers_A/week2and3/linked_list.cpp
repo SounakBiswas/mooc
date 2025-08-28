@@ -10,7 +10,7 @@ class listelem
   listelem(T x, listelem* nx=0): data(x), next(nx){}
   ~listelem(){
     cout<<"destructor called for element,"<<"data="<<this->data<<endl;
-    delete next;
+    //delete this;
   };
 
 };
@@ -19,8 +19,8 @@ template <class T>
 class slist{
   public :
     listelem<T>* head;
-    slist(T init){
-      this->head = new listelem<T>(init,0);
+    slist(){
+      this->head=0;
     }
     void append(T x);
     void prepend(T x);
@@ -35,6 +35,7 @@ slist<T>::~slist(){
   while (it!=NULL) {
     temp=it;
     it=it->next;
+    delete temp;
   }
   
 }
@@ -44,10 +45,15 @@ slist<T>::~slist(){
 
 template <class T>
 void  slist<T>::append(T x) {
-    listelem<T>* ptr= head;
-    while( ptr->next != NULL)
-      ptr = ptr->next;
-    ptr->next=new listelem<T>(x,0);
+    listelem<T>* ptr= this->head;
+    if(ptr == NULL){
+      this->head = new listelem<T>(x,0);
+    } 
+    else {
+      while( ptr->next != NULL)
+        ptr = ptr->next;
+      ptr->next=new listelem<T>(x,0);
+    }
   };
 
 template <class T>
@@ -66,10 +72,11 @@ template <class T>
     return os;
   };
 int main(){
-  slist<int> arr(1);
-  for (int i=1; i<= 10; i++)
+  slist<int> arr;
+  for (int i=0; i<= 10; i++)
     arr.append(i);
   arr.prepend(-1);
+  arr.prepend(-2);
   cout<<arr<<endl;
 }
 
