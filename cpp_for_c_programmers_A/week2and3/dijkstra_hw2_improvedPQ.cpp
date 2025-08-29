@@ -1,4 +1,6 @@
-/* Dijkstra with naive implementation of PQ */
+/* Dijkstra with Priority queues based on a binary heap.
+ * All codes are in the same file, to facilitate homework
+ * submission*/
 #include <iostream>
 #include <limits>
 #include <ctime>
@@ -127,6 +129,39 @@ void graph::add_random_edges(double density,double mindist=1.0, double maxdist=1
  * to describe the open set.
  * 
  *
+ */
+
+/*class priority_queue{
+ * member variables:
+ *    int* data : stores entries of priortiy queue (graph vertices);
+ *    double* keys: keys[v] store present distance(priority) of node v;
+ *    int size: total size of queue;
+ *
+ * private member functions:
+ *    inline void swim(int pos): maintain binary heap property by upward
+ *    shifting an element from position pos
+ *
+ *
+ *
+ *    inline void sink(int pos): maintain binary heap property by downward
+ *    shifting an element from position pos
+ *
+ *    int find_index(int entry): find index of an element(vertex)
+ *
+ * public member functions:
+ *    priority_queue(int size): constructor
+ *
+ *    inline bool contains_element(int entry): check if entry exists in the PQ
+ *
+ *    void push(int entry,double key): push a new element into PQ, maintaing the
+ *    heap property
+ *
+ *    double pop(): remove and return the element with minimum priority
+ *
+ *    int get_size(): get size of the queue
+ *
+ *    void change_priority(int entry, double new_priority):  change the priority
+ *    of an entry, after finding the position of the entry
  */
 class priority_queue{
     int* data;
