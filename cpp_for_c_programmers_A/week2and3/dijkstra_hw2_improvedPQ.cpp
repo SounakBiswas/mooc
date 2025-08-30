@@ -106,30 +106,6 @@ void graph::add_random_edges(double density,double mindist=1.0, double maxdist=1
     }
 }
 
-/* Class priority_queue
- * This implements the Open set from the lectures in a stack-like structure called 
- * priority queue, of which I have made a naive implementation.
- *
- * member variables:
- * int * elements : elements[i] gives the ith element of the open set.
- * int top: index of the top element. This helps not scanning over all vertices to look for            the minimum distance. elements[0] to elements[top-1] are the elements of 
- *          the open set
- * int nmax: maximum number of elements, used to allocate space.
- * int priority: used to store distance of elements, to return the shortest distance
- *
- * member functions:
- *
- * add elements(int vert) 
- * adds the vertex vert into the open set.
- *
- *
- * pop():
- * removes the element with lowest priority (distance) from the queue (open set). I swap
- * the minimum element with element[top-1] so that element[0] to element[top-1] continues
- * to describe the open set.
- * 
- *
- */
 
 /*class priority_queue{
  * member variables:
@@ -178,16 +154,24 @@ class priority_queue{
 
     inline void sink(int pos){
         int swap_pos;
-        while (keys[data[pos]]>keys[data[2*pos]] or keys[data[pos]>keys[data[2*pos+1]]] and pos!=size-1){
-            if(keys[data[2*pos]]<keys[data[2*pos+1]]){
-                swap_pos=2*pos;
+        int branch1, branch2;
+        while(pos<size){
+            swap_pos=pos;
+            branch1=2*pos;
+            branch2=2*pos+1;
+            if(branch1<size and keys[data[pos]]>keys[data[branch1]])
+                swap_pos=branch1;
+            if(branch2<size and keys[data[swap_pos]]>keys[data[branch2]])
+                swap_pos=branch2;
+            if(swap_pos!=pos){
+                swap(data[pos],data[swap_pos]);
+                pos=swap_pos;
             }
             else 
-                swap_pos=2*pos+1;
-            swap(data[pos],data[swap_pos]);
-            pos=swap_pos;
+                break;
 
         }
+
 
     }
     int find_index(int entry){
@@ -212,8 +196,9 @@ class priority_queue{
     inline bool contains_element(int entry){
         return (find_index(entry)<size);
     }
-    void push(int entry,double key){
+    void push(int entry,double priority){
         data[size++]=entry;
+        keys[entry]=priority;
         int pos=size-1;
         swim(pos);
     }
@@ -238,17 +223,16 @@ class priority_queue{
 };
 
 
-/*dijkstra's algorithm
+/*Dijkstra's algorithm
  *
  * Dijkstra's algorithm as in lectures. The open set from lectures is implemented as a 
- * priority queue (PQ). The PQ is starts off with all vertices reachable from the source node. 
- * The nearest node is removed from 
+ * priority queue (PQ). The implementation is using a binary heap. 
  */
 
 
 void graph::shortest_path_dijkstra(int src, double dist[] ){
-    double present_dist;
-    //keeps track of things which have already been removed from the open set
+    double newdist;
+    //closed array keeps track of vertices that have already been removed form the open set
     bool *closed = new bool[n_verts];
     int current_node;
     for(int vert=0; vert<n_verts; vert++){
@@ -256,19 +240,21 @@ void graph::shortest_path_dijkstra(int src, double dist[] ){
         closed[vert]=false;
     }
 
+    //initialise priority queue with the source node
     priority_queue open_set(n_verts);
-    //cout<<open_set.nmax<<endl;
     dist[src]=0;
+    open_set.push(src,dist[src]);
     while(open_set.get_size()!=0){
-        //cout<<"bef nelem:"<<open_set.top<<endl;
         current_node=open_set.pop();
         closed[current_node]=true;
         for(int edge=0; edge<n_edges[current_node]; edge++){
             int nbr=edge_list[current_node][edge];
-            double newdist=dist[current_node]+cost[current_node][nbr];
+            newdist=dist[current_node]+cost[current_node][nbr];
             if(not closed[nbr]){
                 if(! open_set.contains_element(nbr) ){
                     open_set.push(nbr,newdist);
+                    dist[nbr]=newdist;
+                    //cout<<"pushed "<<nbr<<endl;
                 }
                 else{
                     if(newdist<dist[nbr]){
@@ -301,7 +287,7 @@ int main(){
     double *dist=new double[50];
     const double min_dist=1.0;
     const double max_dist=10.0;
-    const int ngraphs=100;
+    const int ngraphs=1000;
     graph G(n_verts);
     srand(clock());
 
@@ -321,7 +307,7 @@ int main(){
             }
 
         }
-        cout<<"density"<<density<<", average shortest path="<<avg_path/(ngraphs*(n_verts-1.0))<<endl;
+        cout<<"density"<<density<<", average shortest path, averaged over "<<ngraphs<<" graphs, ="<<avg_path/(ngraphs*(n_verts-1.0))<<endl;
     }
 }
 
