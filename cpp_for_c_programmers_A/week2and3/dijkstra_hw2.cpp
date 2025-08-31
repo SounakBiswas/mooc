@@ -16,6 +16,16 @@ using namespace std;
  * void add_edge(int v1,int v2, double cost=1.0)
  * adds an edge (v1,v2) between v1 and v2
  *
+ * remove_edge(int v1,int v2)
+ * removes edge (v1,v2) if it exists
+ *
+ *
+ * clear_edges()
+ * clear all edges of graph
+ *
+ * add_random_edges, described later
+ *
+ *
  * shortest_path_dijstra, described later
  */
 
@@ -78,6 +88,10 @@ class graph {
     void shortest_path_dijkstra(int v1,double[] );
     void add_random_edges(double density,double , double);
 };
+
+/*add_random_edges(double density,double mindist=1.0, double maxdist=1.0)  
+ *  fills edges randomly with density given by density
+ *  randomly assigns a distance uniformly between mindist and maxdist*/
 void graph::add_random_edges(double density,double mindist=1.0, double maxdist=1.0){
     double rand_dist;
     for(int vert1=0; vert1<n_verts; vert1++){
@@ -132,8 +146,11 @@ class priority_queue{
         double min= numeric_limits<double>::infinity();
         int min_elem=0;
         for(int i=0; i<top; i++){
-            if(priority[elements[i]]<min)
+          if(priority[elements[i]]<min){
                 min_elem=i;
+                min=priority[elements[i]];
+
+          }
         }
         //pop the minimum element from the priority_queue
         swap(elements[top-1],elements[min_elem]);
@@ -188,10 +205,12 @@ void graph::shortest_path_dijkstra(int src, double dist[] ){
         closed[current_node]=true;
         for(int edge=0; edge<n_edges[current_node]; edge++){
             int nbr=edge_list[current_node][edge];
+            double newdist=dist[current_node]+cost[current_node][nbr];
+            //cout<<"nbr: "<<nbr<<" basedist:"<<dist[current_node]<<" new dis:"<<newdist<<" allowed:"<<closed[nbr]<<" old dist: "<<cost[current_node][nbr]<<endl;
+            //getchar();
             if(! closed[nbr]){
                 if(! open_set.contains_element(nbr)) 
                     open_set.add_element(nbr);
-                double newdist=dist[current_node]+cost[current_node][nbr];
                 //cout<<"dist change:"<<dist[nbr]<<" "<<newdist<<endl;
                 if(newdist<dist[nbr]){
                     dist[nbr]=newdist;
@@ -202,6 +221,19 @@ void graph::shortest_path_dijkstra(int src, double dist[] ){
     }
 }
 
+/*main function
+ * loops over the two densities 20 % and 50%, creates random graphs and
+ * calculates the average shortest distance betwen vertices
+ *
+ * To obtain a better answe, I have averaged over ngraph different graphs.
+ *
+ * variables:
+ * dist: dist[v] has the shortest distance from 0 to v after the algorithm
+ * pair_count: number of reachable vertices
+ * ngraphs: number of independent graphs to average over
+ * avg_path: stores the shortest average path length
+ */
+
 int main(){
     int n_verts=50;
     double densities[]={0.2,0.4};
@@ -209,11 +241,11 @@ int main(){
     double *dist=new double[50];
     const double min_dist=1.0;
     const double max_dist=10.0;
-    const int ngraphs=100;
+    const int ngraphs=1;
     graph G(n_verts);
-    srand(clock());
+    srand(10);
 
-    for(int density_ix=0; density_ix<2; density_ix++){
+    for(int density_ix=0; density_ix<1; density_ix++){
         double avg_path=0;
         int pair_count=0;
         density=densities[density_ix];
