@@ -41,12 +41,16 @@ class graph {
     double **cost;
 
     public:
-    void add_edge(int v1,int v2, double cost=1.0){
+    void add_edge(int v1,int v2, double cost=1.0,bool symm=true){
         edge_list[v1][n_edges[v1]]=v2;
-        edge_list[v2][n_edges[v2]]=v1;
         n_edges[v1]++;
-        n_edges[v2]++;
-        this->cost[v1][v2]=this->cost[v2][v1]=cost;
+        this->cost[v1][v2]=cost;
+
+        if(symm){
+            edge_list[v2][n_edges[v2]]=v1;
+            n_edges[v2]++;
+            this->cost[v2][v1]=cost;
+        }
     }
     void remove_edge(int v1,int v2){
         for(int edge=0; edge<n_edges[v1]; edge++){
