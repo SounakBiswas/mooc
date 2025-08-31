@@ -5,13 +5,12 @@
 using namespace std;
 /*  minimum binary-heap
  *  integer entries keyed by doubles*/
+template <class T>
 class priority_queue{
-    int* data;
-    double* keys;
-    int nmax;
+    vector<pair<T,double>> data;
     int size;
     inline void swim(int pos){
-        while (keys[data[pos]]<keys[data[pos/2]] and pos!=0){
+        while (data[pos].second<data[pos/2].second and pos!=0){
             swap(data[pos],data[pos/2]);
             pos=pos/2;
         }
@@ -25,9 +24,9 @@ class priority_queue{
             swap_pos=pos;
             branch1=2*pos;
             branch2=2*pos+1;
-            if(branch1<size and keys[data[pos]]>keys[data[branch1]])
+            if(branch1<size and data[pos].second>data[branch1].second)
                 swap_pos=branch1;
-            if(branch2<size and keys[data[swap_pos]]>keys[data[branch2]])
+            if(branch2<size and data[pos].second>data[branch2].second)
                 swap_pos=branch2;
             if(swap_pos!=pos){
                 swap(data[pos],data[swap_pos]);
@@ -51,20 +50,14 @@ class priority_queue{
     }
     public:
     priority_queue(int nmax){
-        data= new int[nmax];
-        keys= new double[nmax];
+        data.resize(nmax);
         size=0;
-    }
-    ~priority_queue(){
-        delete[] data;
-        delete[] keys;
     }
     inline bool contains_element(int entry){
         return (find_index(entry)<size);
     }
     void push(int entry,double priority){
-        data[size++]=entry;
-        keys[entry]=priority;
+        data[size++]=make_pair(entry,priority);
         int pos=size-1;
         swim(pos);
     }
@@ -79,8 +72,8 @@ class priority_queue{
     }
     void change_priority(int entry, double new_priority){
         int pos=find_index(entry);
-        double old_priority=keys[pos];
-        keys[pos]=new_priority;
+        double old_priority=data[pos].second;
+        data[pos].second=new_priority;
         if(old_priority<new_priority)
             swim(pos);
         else 
