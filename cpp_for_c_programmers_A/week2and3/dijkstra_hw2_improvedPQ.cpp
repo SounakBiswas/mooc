@@ -213,8 +213,8 @@ class priority_queue{
     }
     void change_priority(int entry, double new_priority){
         int pos=find_index(entry);
-        double old_priority=keys[pos];
-        keys[pos]=new_priority;
+        double old_priority=keys[entry];
+        keys[entry]=new_priority;
         if(old_priority<new_priority)
             swim(pos);
         else 
