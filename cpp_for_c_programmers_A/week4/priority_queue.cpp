@@ -35,8 +35,8 @@ class priority_queue{
         int branch1, branch2;
         while(pos<size){
             swap_pos=pos;
-            branch1=2*pos+1;
-            branch2=2*pos+2;
+            branch1=child1(pos);
+            branch2=child2(pos);
             if(branch1<size and data[pos].second>data[branch1].second)
                 swap_pos=branch1;
             if(branch2<size and data[swap_pos].second>data[branch2].second)
