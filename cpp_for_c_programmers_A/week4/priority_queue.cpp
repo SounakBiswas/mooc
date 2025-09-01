@@ -40,7 +40,7 @@ class priority_queue{
 
 
     }
-    int find_index(int entry){
+    int find_index(T entry){
         int idx=-1;
         for(idx=0; idx<size; idx++){
             if(data[idx]==entry){
@@ -54,10 +54,10 @@ class priority_queue{
         data.resize(nmax);
         size=0;
     }
-    inline bool contains_element(int entry){
+    inline bool contains_element(T entry){
         return (find_index(entry)<size);
     }
-    void push(int entry,double priority){
+    void push(T entry,double priority){
         data[size++]=make_pair(entry,priority);
         int pos=size-1;
         swim(pos);
@@ -71,7 +71,7 @@ class priority_queue{
     int get_size(){
         return size;
     }
-    void change_priority(int entry, double new_priority){
+    void change_priority(T entry, double new_priority){
         int pos=find_index(entry);
         double old_priority=data[pos].second;
         data[pos].second=new_priority;
