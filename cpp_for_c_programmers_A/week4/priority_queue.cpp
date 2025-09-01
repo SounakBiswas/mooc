@@ -10,10 +10,22 @@ template <class T>
 class priority_queue{
     vector<pair<T,double>> data;
     int size;
+    inline int parent(int pos){
+      return (pos+1)/2-1;
+
+    }
+    inline int child1(int pos){
+      return 2*(pos+1)-1;
+
+    }
+    inline int child2(int pos){
+      return 2*(pos+1);
+
+    }
     inline void swim(int pos){
-        while (data[pos].second<data[pos/2].second and pos!=0){
-            swap(data[pos],data[pos/2]);
-            pos=pos/2;
+        while (data[pos].second<data[parent(pos)].second and pos!=0){
+            swap(data[pos],data[parent(pos)]);
+            pos=parent(pos);
         }
 
     }
@@ -23,8 +35,8 @@ class priority_queue{
         int branch1, branch2;
         while(pos<size){
             swap_pos=pos;
-            branch1=2*pos;
-            branch2=2*pos+1;
+            branch1=2*pos+1;
+            branch2=2*pos+2;
             if(branch1<size and data[pos].second>data[branch1].second)
                 swap_pos=branch1;
             if(branch2<size and data[swap_pos].second>data[branch2].second)
@@ -43,7 +55,7 @@ class priority_queue{
     int find_index(T entry){
         int idx=-1;
         for(idx=0; idx<size; idx++){
-            if(data[idx]==entry){
+            if(data[idx].first==entry){
                 break;
             }
         }
@@ -62,11 +74,13 @@ class priority_queue{
         int pos=size-1;
         swim(pos);
     }
-    T pop(){
+    void pop(){
         swap(data[0],data[size-1]);
-        int pos=0;
-        sink(pos);
-        return data[--size].first;
+        size--;
+        sink(0);
+    }
+    T top(){
+        return data[0].first;
     }
     int get_size(){
         return size;
@@ -75,23 +89,23 @@ class priority_queue{
         int pos=find_index(entry);
         double old_priority=data[pos].second;
         data[pos].second=new_priority;
-        if(old_priority<new_priority)
+        if(new_priority<old_priority)
             swim(pos);
         else 
             sink(pos);
     }
     void display(){
-      int row=0;
-      int rowend=1;
-      int elem=0;
-      cout<<setprecision(1)<<std::fixed;
-      while(elem<size){
-        for(; elem <rowend && elem<size; elem++ ){
-          cout<<data[elem].first<<"("<<data[elem].second<<") ";
-        }
-        cout<<endl;
-        rowend+=2*rowend;
-        cout<<endl;
+        int row=0;
+        int rowend=1;
+        int elem=0;
+        cout<<setprecision(1)<<std::fixed;
+        while(elem<size){
+            for(; elem <rowend && elem<size; elem++ ){
+                cout<<data[elem].first<<"("<<data[elem].second<<") ";
+            }
+            cout<<endl;
+            rowend+=2*rowend;
+            cout<<endl;
         }
     }
 };
