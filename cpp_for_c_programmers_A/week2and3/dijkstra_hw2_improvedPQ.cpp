@@ -329,5 +329,6 @@ int main(){
         }
         cout<<"density"<<density<<", average shortest path, averaged over "<<ngraphs<<" graphs, ="<<avg_path/(ngraphs*(1.0*pair_count))<<endl;
     }
+    delete[] dist;
 }
 
