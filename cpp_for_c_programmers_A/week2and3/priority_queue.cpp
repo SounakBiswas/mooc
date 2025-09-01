@@ -10,10 +10,22 @@ class priority_queue{
     double* keys;
     int nmax;
     int size;
+    inline int parent(int pos){
+      return (pos+1)/2-1;
+
+    }
+    inline int child1(int pos){
+      return 2*(pos+1)-1;
+
+    }
+    inline int child2(int pos){
+      return 2*(pos+1);
+
+    }
     inline void swim(int pos){
-        while (keys[data[pos]]<keys[data[pos/2]] and pos!=0){
-            swap(data[pos],data[pos/2]);
-            pos=pos/2;
+        while (keys[data[pos]]<keys[parent(pos)] and pos!=0){
+            swap(data[pos],data[parent(pos)]);
+            pos=parent(pos);
         }
 
     }
@@ -23,8 +35,8 @@ class priority_queue{
         int branch1, branch2;
         while(pos<size){
             swap_pos=pos;
-            branch1=2*pos;
-            branch2=2*pos+1;
+            branch1=child1(pos);
+            branch2=child2(pos);
             if(branch1<size and keys[data[pos]]>keys[data[branch1]])
                 swap_pos=branch1;
             if(branch2<size and keys[data[swap_pos]]>keys[data[branch2]])
@@ -70,9 +82,9 @@ class priority_queue{
     }
     double pop(){
         swap(data[0],data[size-1]);
-        int pos=0;
-        sink(pos);
-        return data[--size];
+        size--;
+        sink(0);
+        return data[size];
     }
     int get_size(){
         return size;
