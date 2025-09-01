@@ -4,6 +4,7 @@
 #include <iostream>
 #include <limits>
 #include <ctime>
+#include <iomanip>
 using namespace std;
 /* Class graph. I maintain a edgelist instead of 
  * adjacency matrix, hoping it would be faster for not-too-dense graphs.
@@ -99,9 +100,11 @@ void graph::add_random_edges(double density,double mindist=1.0, double maxdist=1
     for(int vert1=0; vert1<n_verts; vert1++){
         for(int vert2=vert1+1; vert2<n_verts; vert2++){
             rand_dist=mindist+(rand()/(RAND_MAX+1.0))*(maxdist-mindist);
-            //cout<<rand_dist<<endl;
-            if (rand()/(RAND_MAX+1.0)<density)
-                this->add_edge(vert1,vert2);
+            double z= rand()/(RAND_MAX+1.0);
+            if (z<density){
+                this->add_edge(vert1,vert2,rand_dist);
+
+            }
         }
     }
 }
@@ -204,9 +207,10 @@ class priority_queue{
     }
     double pop(){
         swap(data[0],data[size-1]);
+        size--;
         int pos=0;
         sink(pos);
-        return data[--size];
+        return data[size];
     }
     int get_size(){
         return size;
@@ -219,6 +223,20 @@ class priority_queue{
             swim(pos);
         else 
             sink(pos);
+    }
+    void display(){
+      int row=0;
+      int rowend=1;
+      int elem=0;
+      cout<<setprecision(1)<<std::fixed;
+      while(elem<size){
+        for(; elem <rowend && elem<size; elem++ ){
+          cout<<data[elem]<<"("<<keys[data[elem]]<<") ";
+        }
+        cout<<endl;
+        rowend+=2*rowend;
+        cout<<endl;
+        }
     }
 };
 
@@ -254,7 +272,6 @@ void graph::shortest_path_dijkstra(int src, double dist[] ){
                 if(! open_set.contains_element(nbr) ){
                     open_set.push(nbr,newdist);
                     dist[nbr]=newdist;
-                    //cout<<"pushed "<<nbr<<endl;
                 }
                 else{
                     if(newdist<dist[nbr]){
@@ -281,33 +298,36 @@ void graph::shortest_path_dijkstra(int src, double dist[] ){
  */
 
 int main(){
-    int n_verts=50;
+    int n_verts=20;
     double densities[]={0.2,0.4};
     double density;
-    double *dist=new double[50];
+    double *dist=new double[n_verts];
     const double min_dist=1.0;
     const double max_dist=10.0;
-    const int ngraphs=1000;
+    const int ngraphs=1;
     graph G(n_verts);
-    srand(clock());
+    srand(1);
 
-    for(int density_ix=0; density_ix<2; density_ix++){
+    for(int density_ix=0; density_ix<1; density_ix++){
         double avg_path=0;
+        double avg_path2=0;
         int pair_count=0;
         density=densities[density_ix];
         for(int ngr=0; ngr<ngraphs; ngr++){
             G.clear_edges();
+            avg_path2=0.0;
             G.add_random_edges(density,1.0,10.0);
             G.shortest_path_dijkstra(0,dist);
             for(int i=1; i <n_verts; i++){
                 if(dist[i]!=numeric_limits<double>::infinity()){
                     pair_count+=1;
                     avg_path+=dist[i];
+                    avg_path2+=dist[i];
                 }
             }
 
         }
-        cout<<"density"<<density<<", average shortest path, averaged over "<<ngraphs<<" graphs, ="<<avg_path/(ngraphs*(n_verts-1.0))<<endl;
+        cout<<"density"<<density<<", average shortest path, averaged over "<<ngraphs<<" graphs, ="<<avg_path/(ngraphs*(1.0*pair_count))<<endl;
     }
 }
 
