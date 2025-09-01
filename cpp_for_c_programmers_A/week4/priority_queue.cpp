@@ -5,7 +5,7 @@
 #include <iomanip>
 using namespace std;
 /*  minimum binary-heap
- *  integer entries keyed by doubles*/
+ *  template entries and double priorites*/
 template <class T>
 class priority_queue{
     vector<pair<T,double>> data;
@@ -62,11 +62,11 @@ class priority_queue{
         int pos=size-1;
         swim(pos);
     }
-    double pop(){
+    T pop(){
         swap(data[0],data[size-1]);
         int pos=0;
         sink(pos);
-        return data[--size];
+        return data[--size].first;
     }
     int get_size(){
         return size;
