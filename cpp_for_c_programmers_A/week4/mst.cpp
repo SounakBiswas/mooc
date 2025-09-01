@@ -2,9 +2,11 @@
  * All codes are in the same file, to facilitate homework
  * submission*/
 #include <iostream>
+#include <iomanip>
 #include <limits>
 #include <ctime>
 #include <fstream>
+#include <stack>
 #include <iterator>
 #include <vector>
 using namespace std;
@@ -100,7 +102,7 @@ class graph {
             add_edge(v1,v2,cost,false);
         }
     };
-    int tot_edges(){
+    int get_tot_edges(){
         int tot_edges=0;
         for(int i =0; i<n_verts; i++){
             tot_edges+=n_edges[i];
@@ -118,63 +120,18 @@ class graph {
     }
     void shortest_path_dijkstra(int v1,double[] );
     void add_random_edges(double density,double , double);
+    void mst_prim();
+    void mst_kruskal();
 };
-
-/*add_random_edges(double density,double mindist=1.0, double maxdist=1.0)  
- *  fills edges randomly with density given by density
- *  randomly assigns a distance uniformly between mindist and maxdist*/
-void graph::add_random_edges(double density,double mindist=1.0, double maxdist=1.0){
-    double rand_dist;
-    for(int vert1=0; vert1<n_verts; vert1++){
-        for(int vert2=vert1+1; vert2<n_verts; vert2++){
-            rand_dist=mindist+(rand()/(RAND_MAX+1.0))*(maxdist-mindist);
-            //cout<<rand_dist<<endl;
-            if (rand()/(RAND_MAX+1.0)<density)
-                this->add_edge(vert1,vert2);
-        }
-    }
+pair<int,int> make_edge(int x, int y){
+    return x<y?make_pair(x,y):make_pair(y,x);
 }
-
-
-/*class priority_queue{
- * member variables:
- *    int* data : stores entries of priortiy queue (graph vertices);
- *    double* keys: keys[v] store present distance(priority) of node v;
- *    int size: total size of queue;
- *
- * private member functions:
- *    inline void swim(int pos): maintain binary heap property by upward
- *    shifting an element from position pos
- *
- *
- *
- *    inline void sink(int pos): maintain binary heap property by downward
- *    shifting an element from position pos
- *
- *    int find_index(int entry): find index of an element(vertex)
- *
- * public member functions:
- *    priority_queue(int size): constructor
- *
- *    inline bool contains_element(int entry): check if entry exists in the PQ
- *
- *    void push(int entry,double key): push a new element into PQ, maintaing the
- *    heap property
- *
- *    double pop(): remove and return the element with minimum priority
- *
- *    int get_size(): get size of the queue
- *
- *    void change_priority(int entry, double new_priority):  change the priority
- *    of an entry, after finding the position of the entry
- */
+template <class T>
 class priority_queue{
-    int* data;
-    double* keys;
-    int nmax;
+    vector<pair<T,double>> data;
     int size;
     inline void swim(int pos){
-        while (keys[data[pos]]<keys[data[pos/2]] and pos!=0){
+        while (data[pos].second<data[pos/2].second and pos!=0){
             swap(data[pos],data[pos/2]);
             pos=pos/2;
         }
@@ -188,9 +145,9 @@ class priority_queue{
             swap_pos=pos;
             branch1=2*pos;
             branch2=2*pos+1;
-            if(branch1<size and keys[data[pos]]>keys[data[branch1]])
+            if(branch1<size and data[pos].second>data[branch1].second)
                 swap_pos=branch1;
-            if(branch2<size and keys[data[swap_pos]]>keys[data[branch2]])
+            if(branch2<size and data[swap_pos].second>data[branch2].second)
                 swap_pos=branch2;
             if(swap_pos!=pos){
                 swap(data[pos],data[swap_pos]);
@@ -203,7 +160,7 @@ class priority_queue{
 
 
     }
-    int find_index(int entry){
+    int find_index(T entry){
         int idx=-1;
         for(idx=0; idx<size; idx++){
             if(data[idx]==entry){
@@ -214,129 +171,97 @@ class priority_queue{
     }
     public:
     priority_queue(int nmax){
-        data= new int[nmax];
-        keys= new double[nmax];
+        data.resize(nmax);
         size=0;
     }
-    ~priority_queue(){
-        delete[] data;
-        delete[] keys;
-    }
-    inline bool contains_element(int entry){
+    inline bool contains_element(T entry){
         return (find_index(entry)<size);
     }
-    void push(int entry,double priority){
-        data[size++]=entry;
-        keys[entry]=priority;
+    void push(T entry,double priority){
+        data[size++]=make_pair(entry,priority);
         int pos=size-1;
         swim(pos);
     }
-    double pop(){
+    T pop(){
         swap(data[0],data[size-1]);
         int pos=0;
         sink(pos);
-        return data[--size];
+        return data[--size].first;
     }
     int get_size(){
         return size;
     }
-    void change_priority(int entry, double new_priority){
+    void change_priority(T entry, double new_priority){
         int pos=find_index(entry);
-        double old_priority=keys[pos];
-        keys[pos]=new_priority;
+        double old_priority=data[pos].second;
+        data[pos].second=new_priority;
         if(old_priority<new_priority)
             swim(pos);
         else 
             sink(pos);
     }
+    void display(){
+        int row=0;
+        int rowend=1;
+        int elem=0;
+        cout<<setprecision(1)<<std::fixed;
+        while(elem<size){
+            for(; elem <rowend && elem<size; elem++ ){
+                cout<<data[elem].first<<"("<<data[elem].second<<") ";
+            }
+            cout<<endl;
+            rowend+=2*rowend;
+            cout<<endl;
+        }
+    }
 };
 
+void graph::mst_prim(){
+    int src=0;
+    int nbr;
+    int tot_edges=get_tot_edges();
+    stack<int> open_verts;
+    priority_queue<pair<int,int>> open_edges(tot_edges);
+    vector<bool> in_mst(n_verts,false);
 
-/*Dijkstra's algorithm
- *
- * Dijkstra's algorithm as in lectures. The open set from lectures is implemented as a 
- * priority queue (PQ). The implementation is using a binary heap. 
- */
+    auto check_loop=[in_mst](pair<int,int> p ){
+      return in_mst[p.first] && in_mst[p.second];
+    };
+    auto get_open_vert=[in_mst](pair<int,int> p ){
+      if(in_mst[p.first])
+        return p.second;
+      else 
+        return p.first;
+    };
 
+    open_verts.push(src);
 
-void graph::shortest_path_dijkstra(int src, double dist[] ){
-    double newdist;
-    //closed array keeps track of vertices that have already been removed form the open set
-    bool *closed = new bool[n_verts];
-    int current_node;
-    for(int vert=0; vert<n_verts; vert++){
-        dist[vert]=numeric_limits<double>::infinity();
-        closed[vert]=false;
-    }
+    while(! open_verts.empty()){
+        src=open_verts.top();
+        open_verts.pop();
+        in_mst[src]=true;
+        for(int edge=0; edge<n_edges[src]; edge++){
+            nbr=edge_list[src][edge];
+            if(not in_mst[nbr])
+                open_edges.push(make_edge(src,nbr),cost[src][nbr]);
 
-    //initialise priority queue with the source node
-    priority_queue open_set(n_verts);
-    dist[src]=0;
-    open_set.push(src,dist[src]);
-    while(open_set.get_size()!=0){
-        current_node=open_set.pop();
-        closed[current_node]=true;
-        for(int edge=0; edge<n_edges[current_node]; edge++){
-            int nbr=edge_list[current_node][edge];
-            newdist=dist[current_node]+cost[current_node][nbr];
-            if(not closed[nbr]){
-                if(! open_set.contains_element(nbr) ){
-                    open_set.push(nbr,newdist);
-                    dist[nbr]=newdist;
-                    //cout<<"pushed "<<nbr<<endl;
-                }
-                else{
-                    if(newdist<dist[nbr]){
-                        dist[nbr]=newdist;
-                        open_set.change_priority(nbr,newdist);
-                    }
-                }
-            }
         }
+        auto edge=open_edges.pop();
+        while( check_loop(edge)){
+          edge= open_edges.pop();
+        }
+        int new_vert=get_open_vert(edge);
+        open_verts.push(get_open_vert(edge));
+        in_mst[new_vert]=true;
     }
+
 }
 
-/*main function
- * loops over the two densities 20 % and 50%, creates random graphs and
- * calculates the average shortest distance betwen vertices
- *
- * To obtain a better answe, I have averaged over ngraph different graphs.
- *
- * variables:
- * dist: dist[v] has the shortest distance from 0 to v after the algorithm
- * pair_count: number of reachable vertices
- * ngraphs: number of independent graphs to average over
- * avg_path: stores the shortest average path length
- */
+
 
 int main(){
-    int n_verts=50;
-    double densities[]={0.2,0.4};
-    double density;
-    double *dist=new double[50];
-    const double min_dist=1.0;
-    const double max_dist=10.0;
-    const int ngraphs=1000;
-    graph G(n_verts);
-    srand(clock());
+    graph G("mst_data.dat");
 
-    for(int density_ix=0; density_ix<2; density_ix++){
-        double avg_path=0;
-        int pair_count=0;
-        density=densities[density_ix];
-        for(int ngr=0; ngr<ngraphs; ngr++){
-            G.clear_edges();
-            G.add_random_edges(density,1.0,10.0);
-            G.shortest_path_dijkstra(0,dist);
-            for(int i=1; i <n_verts; i++){
-                if(dist[i]!=numeric_limits<double>::infinity()){
-                    pair_count+=1;
-                    avg_path+=dist[i];
-                }
-            }
 
-        }
-        cout<<"density"<<density<<", average shortest path, averaged over "<<ngraphs<<" graphs, ="<<avg_path/(ngraphs*(n_verts-1.0))<<endl;
-    }
 }
 
