@@ -139,10 +139,22 @@ template <class T>
 class priority_queue{
     vector<pair<T,double>> data;
     int size;
+    inline int parent(int pos){
+      return (pos+1)/2-1;
+
+    }
+    inline int child1(int pos){
+      return 2*(pos+1)-1;
+
+    }
+    inline int child2(int pos){
+      return 2*(pos+1);
+
+    }
     inline void swim(int pos){
-        while (data[pos].second<data[pos/2].second and pos!=0){
-            swap(data[pos],data[pos/2]);
-            pos=pos/2;
+        while (data[pos].second<data[parent(pos)].second and pos!=0){
+            swap(data[pos],data[parent(pos)]);
+            pos=parent(pos);
         }
 
     }
@@ -152,8 +164,8 @@ class priority_queue{
         int branch1, branch2;
         while(pos<size){
             swap_pos=pos;
-            branch1=2*pos;
-            branch2=2*pos+1;
+            branch1=2*pos+1;
+            branch2=2*pos+2;
             if(branch1<size and data[pos].second>data[branch1].second)
                 swap_pos=branch1;
             if(branch2<size and data[swap_pos].second>data[branch2].second)
@@ -172,7 +184,7 @@ class priority_queue{
     int find_index(T entry){
         int idx=-1;
         for(idx=0; idx<size; idx++){
-            if(data[idx]==entry){
+            if(data[idx].first==entry){
                 break;
             }
         }
@@ -193,9 +205,8 @@ class priority_queue{
     }
     void pop(){
         swap(data[0],data[size-1]);
-        int pos=0;
-        sink(pos);
         size--;
+        sink(0);
     }
     T top(){
         return data[0].first;
@@ -207,7 +218,7 @@ class priority_queue{
         int pos=find_index(entry);
         double old_priority=data[pos].second;
         data[pos].second=new_priority;
-        if(old_priority<new_priority)
+        if(new_priority<old_priority)
             swim(pos);
         else 
             sink(pos);
@@ -273,6 +284,7 @@ graph graph::mst_prim(){
         else{
             src=get_open_vert(open_edges.top());
             nbr=get_closed_vert(open_edges.top());
+            open_edges.pop();
             mst.add_edge(src,nbr,cost[src][nbr]);
         }
     }
@@ -311,33 +323,31 @@ graph graph::mst_prim_alt(){
 
     int src=0;
     vcost[src]=0;
-    open_verts.push(src,0);
-    while(src>=0){
+    for(int vert=0; vert<n_verts; vert++)
+        open_verts.push(vert,vcost[vert]);
+    while(open_verts.get_size()>0){
         src=open_verts.top();
         open_verts.pop();
+        in_mst[src]=true;
         for(int edge=0; edge<n_edges[src]; edge++){
             nbr=edge_list[src][edge];
             if(not in_mst[nbr]){
-                if(cost[src][nbr]<vcost[src]){
-                    vcost[src]=cost[src][nbr];
-                    open_verts.change_priority(src,vcost[src]);
+                if(cost[src][nbr]<vcost[nbr]){
+                    vcost[nbr]=cost[src][nbr];
+                    open_verts.change_priority(nbr,vcost[nbr]);
+                    mst_edge[nbr]=src;
                 }
-                else 
-                   open_verts.push(src,cost[src][nbr]);
             }
 
         }
-        while(open_edges.get_size()>0 and check_loop(open_edges.top())){
-            open_edges.pop();
+    }
+    for(int vert=0; vert<n_verts; vert++){
+        if(mst_edge[vert]!=-1){
+            mst.add_edge(mst_edge[vert],vert,vcost[vert]);
+
         }
-        if(open_edges.get_size()==0){
-            src=-1;
-        }
-        else{
-            src=get_open_vert(open_edges.top());
-            nbr=get_closed_vert(open_edges.top());
-            mst.add_edge(src,nbr,cost[src][nbr]);
-        }
+
+
     }
 
     return mst;
@@ -350,6 +360,8 @@ int main(){
     graph G("mst_data.txt");
     graph mst=G.mst_prim();
     cout<<mst.get_tot_edges()<<" "<<mst.total_cost()<<endl;
+    graph mst2=G.mst_prim_alt();
+    cout<<mst2.get_tot_edges()<<" "<<mst2.total_cost()<<endl;
 
 }
 
