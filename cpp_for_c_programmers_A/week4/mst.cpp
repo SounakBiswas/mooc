@@ -6,7 +6,6 @@
 #include <limits>
 #include <ctime>
 #include <fstream>
-#include <stack>
 #include <iterator>
 #include <vector>
 using namespace std;
@@ -109,6 +108,15 @@ class graph {
         }
         return tot_edges/2;
     }
+    double total_cost(){
+        double total=0.0;
+        for(int vert =0; vert<n_verts; vert++){
+            for(int edge=0; edge<n_edges[vert]; edge++){
+                total += cost[vert][edge_list[vert][edge]];
+            }
+        }
+        return total/2;
+    }
 
     ~graph(){
         for(int i = 0; i < this->n_verts; i++){
@@ -120,8 +128,9 @@ class graph {
     }
     void shortest_path_dijkstra(int v1,double[] );
     void add_random_edges(double density,double , double);
-    void mst_prim();
-    void mst_kruskal();
+    graph mst_prim();
+    graph mst_prim_alt();
+    graph mst_kruskal();
 };
 pair<int,int> make_edge(int x, int y){
     return x<y?make_pair(x,y):make_pair(y,x);
@@ -182,11 +191,14 @@ class priority_queue{
         int pos=size-1;
         swim(pos);
     }
-    T pop(){
+    void pop(){
         swap(data[0],data[size-1]);
         int pos=0;
         sink(pos);
-        return data[--size].first;
+        size--;
+    }
+    T top(){
+        return data[0].first;
     }
     int get_size(){
         return size;
@@ -216,52 +228,128 @@ class priority_queue{
     }
 };
 
-void graph::mst_prim(){
-    int src=0;
+graph graph::mst_prim(){
     int nbr;
     int tot_edges=get_tot_edges();
-    stack<int> open_verts;
     priority_queue<pair<int,int>> open_edges(tot_edges);
     vector<bool> in_mst(n_verts,false);
+    graph mst(n_verts);
 
-    auto check_loop=[in_mst](pair<int,int> p ){
-      return in_mst[p.first] && in_mst[p.second];
-    };
-    auto get_open_vert=[in_mst](pair<int,int> p ){
-      if(in_mst[p.first])
-        return p.second;
-      else 
-        return p.first;
+    auto check_loop=[&](pair<int,int> p ){
+        return (in_mst[p.first] and in_mst[p.second]);
     };
 
-    open_verts.push(src);
+    auto get_open_vert=[&](pair<int,int> p ){
+        if(in_mst[p.first])
+            return p.second;
+        else 
+            return p.first;
+    };
 
-    while(! open_verts.empty()){
-        src=open_verts.top();
-        open_verts.pop();
+    auto get_closed_vert=[&](pair<int,int> p ){
+        if(in_mst[p.first])
+            return p.first;
+        else 
+            return p.second;
+    };
+
+
+    int src=0;
+    while(src>=0){
         in_mst[src]=true;
         for(int edge=0; edge<n_edges[src]; edge++){
             nbr=edge_list[src][edge];
-            if(not in_mst[nbr])
+            if(not in_mst[nbr]){
                 open_edges.push(make_edge(src,nbr),cost[src][nbr]);
+            }
 
         }
-        auto edge=open_edges.pop();
-        while( check_loop(edge)){
-          edge= open_edges.pop();
+        while(open_edges.get_size()>0 and check_loop(open_edges.top())){
+            open_edges.pop();
         }
-        int new_vert=get_open_vert(edge);
-        open_verts.push(get_open_vert(edge));
-        in_mst[new_vert]=true;
+        if(open_edges.get_size()==0){
+            src=-1;
+        }
+        else{
+            src=get_open_vert(open_edges.top());
+            nbr=get_closed_vert(open_edges.top());
+            mst.add_edge(src,nbr,cost[src][nbr]);
+        }
     }
+
+    return mst;
+
+}
+
+graph graph::mst_prim_alt(){
+    int nbr;
+    int tot_edges=get_tot_edges();
+    priority_queue<int> open_verts(tot_edges);
+    vector <double> vcost(n_verts,numeric_limits<double>::infinity());
+    vector <int> mst_edge(n_verts,-1);
+    vector<bool> in_mst(n_verts,false);
+    graph mst(n_verts);
+
+    auto check_loop=[&](pair<int,int> p ){
+        return (in_mst[p.first] and in_mst[p.second]);
+    };
+
+    auto get_open_vert=[&](pair<int,int> p ){
+        if(in_mst[p.first])
+            return p.second;
+        else 
+            return p.first;
+    };
+
+    auto get_closed_vert=[&](pair<int,int> p ){
+        if(in_mst[p.first])
+            return p.first;
+        else 
+            return p.second;
+    };
+
+
+    int src=0;
+    vcost[src]=0;
+    open_verts.push(src,0);
+    while(src>=0){
+        src=open_verts.top();
+        open_verts.pop();
+        for(int edge=0; edge<n_edges[src]; edge++){
+            nbr=edge_list[src][edge];
+            if(not in_mst[nbr]){
+                if(cost[src][nbr]<vcost[src]){
+                    vcost[src]=cost[src][nbr];
+                    open_verts.change_priority(src,vcost[src]);
+                }
+                else 
+                   open_verts.push(src,cost[src][nbr]);
+            }
+
+        }
+        while(open_edges.get_size()>0 and check_loop(open_edges.top())){
+            open_edges.pop();
+        }
+        if(open_edges.get_size()==0){
+            src=-1;
+        }
+        else{
+            src=get_open_vert(open_edges.top());
+            nbr=get_closed_vert(open_edges.top());
+            mst.add_edge(src,nbr,cost[src][nbr]);
+        }
+    }
+
+    return mst;
 
 }
 
 
 
 int main(){
-    graph G("mst_data.dat");
-
+    graph G("mst_data.txt");
+    graph mst=G.mst_prim();
+    cout<<mst.get_tot_edges()<<" "<<mst.total_cost()<<endl;
 
 }
 
