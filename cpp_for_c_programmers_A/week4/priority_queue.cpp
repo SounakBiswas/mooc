@@ -2,6 +2,7 @@
 #include <stack>
 #include <vector>
 #include <limits>
+#include <iomanip>
 using namespace std;
 /*  minimum binary-heap
  *  integer entries keyed by doubles*/
@@ -26,7 +27,7 @@ class priority_queue{
             branch2=2*pos+1;
             if(branch1<size and data[pos].second>data[branch1].second)
                 swap_pos=branch1;
-            if(branch2<size and data[pos].second>data[branch2].second)
+            if(branch2<size and data[swap_pos].second>data[branch2].second)
                 swap_pos=branch2;
             if(swap_pos!=pos){
                 swap(data[pos],data[swap_pos]);
@@ -78,5 +79,19 @@ class priority_queue{
             swim(pos);
         else 
             sink(pos);
+    }
+    void display(){
+      int row=0;
+      int rowend=1;
+      int elem=0;
+      cout<<setprecision(1)<<std::fixed;
+      while(elem<size){
+        for(; elem <rowend && elem<size; elem++ ){
+          cout<<data[elem].first<<"("<<data[elem].second<<") ";
+        }
+        cout<<endl;
+        rowend+=2*rowend;
+        cout<<endl;
+        }
     }
 };
